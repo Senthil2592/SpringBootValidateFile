@@ -1,5 +1,7 @@
 package com.rabobank.validator;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
 
 import org.json.simple.JSONArray;
@@ -10,7 +12,8 @@ import org.mockito.InjectMocks;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import static org.junit.Assert.assertEquals;
+
+import com.rabobank.contants.AppConstants;
 
 
 @RunWith(MockitoJUnitRunner.class)
@@ -21,21 +24,41 @@ public class FileValidatorTest {
 	@InjectMocks
 	private FileValidator validator;
 	
+	// Mock data are loaded from AppConstants file
 	
-	public static final String SAMPLE_DATA  = "194261, NL91RABO0315273637, Clothes from Jan Bakker, 21.6, -41.83, 65.65";
-
 
 	@Test
-	public void testValidateInputFileCsv() throws IOException {
-		MockMultipartFile file = new MockMultipartFile("file", "records.csv", MediaType.MULTIPART_FORM_DATA_VALUE, SAMPLE_DATA.getBytes());
-		assertEquals(returnSuccessResponse(), validator.validateInputFile(file));
+	public void testValidateInputFileCsvErr() throws IOException {
+		MockMultipartFile file = new MockMultipartFile("file", "records.csv", MediaType.MULTIPART_FORM_DATA_VALUE, AppConstants.CSV_SAMPLE_DATA_ERR.getBytes());
+		assertEquals(returnErrorResponse(), validator.validateInputFile(file));
+
+	}
+	
+	@Test
+	public void testValidateInputFileXmlErr() throws IOException {
+		MockMultipartFile file = new MockMultipartFile("file", "records.xml", MediaType.MULTIPART_FORM_DATA_VALUE, AppConstants.XML_SAMPLE_DATA_ERR.getBytes());
+		assertEquals(returnErrorResponse(), validator.validateInputFile(file));
 
 	}
 	
 	@Test (expected = IOException.class)
 	public void testValidateInvalidInput() throws IOException {
-		MockMultipartFile file = new MockMultipartFile("file", "records.html", MediaType.MULTIPART_FORM_DATA_VALUE, SAMPLE_DATA.getBytes());
+		MockMultipartFile file = new MockMultipartFile("file", "records.html", MediaType.MULTIPART_FORM_DATA_VALUE, AppConstants.HTML_SAMPLE_DATA.getBytes());
 		assertEquals(returnJsonError(),validator.validateInputFile(file));
+
+	}
+	
+	@Test
+	public void testValidateInputFileCsvSuccess() throws IOException {
+		MockMultipartFile file = new MockMultipartFile("file", "records.csv", MediaType.MULTIPART_FORM_DATA_VALUE, AppConstants.CSV_SAMPLE_DATA.getBytes());
+		assertEquals(returnSuccessResponse(), validator.validateInputFile(file));
+
+	}
+	
+	@Test
+	public void testValidateInputFileXmlSuccess() throws IOException {
+		MockMultipartFile file = new MockMultipartFile("file", "records.xml", MediaType.MULTIPART_FORM_DATA_VALUE, AppConstants.XML_SAMPLE_DATA.getBytes());
+		assertEquals(returnSuccessResponse(), validator.validateInputFile(file));
 
 	}
 	
@@ -47,7 +70,7 @@ public class FileValidatorTest {
 	}
 	
 	
-	public JSONObject returnSuccessResponse() {
+	public JSONObject returnErrorResponse() {
 		JSONObject jsonResponse = new JSONObject();
 		JSONArray balanceMistakeRecord = new JSONArray();
 		balanceMistakeRecord.add("194261");
@@ -55,6 +78,16 @@ public class FileValidatorTest {
 		jsonResponse.put("duplicateEntries","0");
 		jsonResponse.put("endBalanceError",balanceMistakeRecord);
 		jsonResponse.put("status","Error");
+		return jsonResponse;
+
+	}
+	
+	public JSONObject returnSuccessResponse() {
+		JSONObject jsonResponse = new JSONObject();
+		
+		jsonResponse.put("duplicateEntries","0");
+		jsonResponse.put("endBalanceError","0");
+		jsonResponse.put("status","Success");
 		return jsonResponse;
 
 	}

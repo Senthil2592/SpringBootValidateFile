@@ -14,6 +14,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 
+import com.rabobank.contants.AppConstants;
 import com.rabobank.validator.FileValidator;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -41,7 +42,7 @@ public class ValidateControllerTest {
 		
 		MockMultipartFile file = new MockMultipartFile("file", "records.html", MediaType.TEXT_PLAIN_VALUE, "<html> </html>".getBytes());
 		JSONObject jsonResponse = returnJsonError();
-		when(fileValidator.validateInputFile(file)).thenThrow(new IOException("Invalid Input"));
+		when(fileValidator.validateInputFile(file)).thenThrow(new IOException(AppConstants.INVALID_INPUT_MSG));
 		when(fileValidator.returnJsonError()).thenReturn(jsonResponse);
 
 
@@ -50,7 +51,7 @@ public class ValidateControllerTest {
 	
 	@Test
 	public void testCheckServiceStatus() {
-		String returnResponse = "Hello! This is a rest Service and the Service is Up and running.";
+		String returnResponse = AppConstants.WELCOME_TEXT;
 		assertEquals(returnResponse, validateController.checkServiceStatus());
 	}
 	

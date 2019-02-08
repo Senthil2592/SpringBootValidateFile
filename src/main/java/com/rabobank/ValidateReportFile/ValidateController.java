@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.rabobank.contants.AppConstants;
 import com.rabobank.validator.FileValidator;
 
 /**
@@ -20,7 +21,7 @@ import com.rabobank.validator.FileValidator;
  *
  */
 @RestController
-@RequestMapping("/rabobank")
+@RequestMapping(AppConstants.CONTEXT_ROOT)
 public class ValidateController {
 
 	@Autowired
@@ -33,22 +34,22 @@ public class ValidateController {
 	 * @return
 	 * @throws IOException
 	 */
-	@RequestMapping(value = "/validateFile", method = RequestMethod.POST)
+	@RequestMapping(value = AppConstants.VALIDATE_FILE, method = RequestMethod.POST)
 	public @ResponseBody JSONObject validateReportFile(@RequestBody MultipartFile file) {
 		JSONObject jsonResponse = null;
 		try {
 			jsonResponse = fileValidator.validateInputFile(file);
 		} catch (IOException exception) {
 			jsonResponse = fileValidator.returnJsonError();
-			log.error("Invalid Input Error", exception);   //for Splunk logging
+			log.error(AppConstants.INVALID_INPUT_MSG, exception);   //for Splunk logging
 		}finally {
 			return jsonResponse;
 		} 
 	}
 	
-	@RequestMapping(value = "/validateFile", method = RequestMethod.GET)
+	@RequestMapping(value = AppConstants.VALIDATE_FILE, method = RequestMethod.GET)
 	public @ResponseBody String checkServiceStatus() {
-		return "Hello! This is a rest Service and the Service is Up and running.";
+		return AppConstants.WELCOME_TEXT;
 	}
 
 }

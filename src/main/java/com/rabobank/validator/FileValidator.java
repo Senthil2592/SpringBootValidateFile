@@ -76,6 +76,7 @@ public class FileValidator {
 		return jsonResponse;
 	}
 
+	//Validate XML file
 	private void validateXmlFile(MultipartFile inputFile, Set<String> duplicateRecordSet, Set<String> balanceMistakeSet) {
 		
 		 Map<String, Float> recordMap = new HashMap<String, Float>();
@@ -88,15 +89,13 @@ public class FileValidator {
 				Document doc = dBuilder.parse(inputFile.getInputStream());
 		        NodeList nodeList = doc.getElementsByTagName("record");
 		        
-		        Stream<Node> nodeStream = IntStream.range(0, nodeList.getLength())
-                        .mapToObj(nodeList::item);
+		        Stream<Node> nodeStream = IntStream.range(0, nodeList.getLength()).mapToObj(nodeList::item);
 		        
 		        nodeStream.filter(node -> (node.getNodeType() == Node.ELEMENT_NODE)).forEach(node -> {
-		        	    Element eElement = (Element) node;
+		        	  Element element = (Element) node;
 		        	    
-		        	   validateInputsFromFile(eElement.getAttribute("reference"), fetchValueFromXML(eElement, "startBalance"), 
-		        	    		fetchValueFromXML(eElement, "mutation"), fetchValueFromXML(eElement, "endBalance"), duplicateRecordSet, balanceMistakeSet, recordMap);
-		            	
+		        	  validateInputsFromFile(element.getAttribute("reference"), fetchValueFromXML(element, "startBalance"), 
+		        	    		fetchValueFromXML(element, "mutation"), fetchValueFromXML(element, "endBalance"), duplicateRecordSet, balanceMistakeSet, recordMap);
 		        });
 				
 			} catch (SAXException | ParserConfigurationException| IOException exception) {
@@ -110,6 +109,7 @@ public class FileValidator {
 
 	}
 	
+	//Common Validation logic for both csv and xml files
 	private void validateInputsFromFile(String referenceNo, String startBalance, String mutation, String endBalance, Set<String> duplicateRecordSet,
 			Set<String> balanceMistakeSet, Map<String, Float> recordMap) {
 		
