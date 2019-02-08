@@ -77,7 +77,7 @@ public class FileValidator {
 	}
 
 	//Validate XML file
-	private void validateXmlFile(MultipartFile inputFile, Set<String> duplicateRecordSet, Set<String> balanceMistakeSet) {
+	private void validateXmlFile(MultipartFile inputFile, Set<String> duplicateRecordSet, Set<String> balanceMismatchSet) {
 		
 		 Map<String, Float> recordMap = new HashMap<String, Float>();
 		 DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -95,7 +95,7 @@ public class FileValidator {
 		        	  Element element = (Element) node;
 		        	    
 		        	  validateInputsFromFile(element.getAttribute("reference"), fetchValueFromXML(element, "startBalance"), 
-		        	    		fetchValueFromXML(element, "mutation"), fetchValueFromXML(element, "endBalance"), duplicateRecordSet, balanceMistakeSet, recordMap);
+		        	    		fetchValueFromXML(element, "mutation"), fetchValueFromXML(element, "endBalance"), duplicateRecordSet, balanceMismatchSet, recordMap);
 		        });
 				
 			} catch (SAXException | ParserConfigurationException| IOException exception) {
@@ -111,14 +111,14 @@ public class FileValidator {
 	
 	//Common Validation logic for both csv and xml files
 	private void validateInputsFromFile(String referenceNo, String startBalance, String mutation, String endBalance, Set<String> duplicateRecordSet,
-			Set<String> balanceMistakeSet, Map<String, Float> recordMap) {
+			Set<String> balanceMismatchSet, Map<String, Float> recordMap) {
 		
 		if (null == recordMap.get(referenceNo)) {
 			float totalSum = round(Float.parseFloat(startBalance) + Float.parseFloat(mutation));
 			if (totalSum == Float.parseFloat(endBalance)) {
 				recordMap.put(referenceNo, totalSum);
 			} else {
-				balanceMistakeSet.add(referenceNo);
+				balanceMismatchSet.add(referenceNo);
 			}
 		} else {
 			duplicateRecordSet.add(referenceNo);
@@ -132,16 +132,16 @@ public class FileValidator {
                 .getTextContent();
 	}
 	
-	private JSONObject mapJsonArrayToJsonObject(Set<String> duplicateRecordSet, Set<String> balanceMistakeSet) {
+	private JSONObject mapJsonArrayToJsonObject(Set<String> duplicateRecordSet, Set<String> balanceMismatchSet) {
 		JSONObject jsonResponse = new JSONObject();
 		JSONArray duplicateRecord = new JSONArray();
-		JSONArray balanceMistakeRecord = new JSONArray();
+		JSONArray balanceMismatchRecord = new JSONArray();
 
-		jsonResponse.put("status", (duplicateRecordSet.size() == 0 && balanceMistakeSet.size() == 0) ? "Success" : "Error");
+		jsonResponse.put("status", (duplicateRecordSet.size() == 0 && balanceMismatchSet.size() == 0) ? "Success" : "Error");
 		setJsonArrayObject(duplicateRecord, duplicateRecordSet);
-		setJsonArrayObject(balanceMistakeRecord, balanceMistakeSet);
+		setJsonArrayObject(balanceMismatchRecord, balanceMismatchSet);
 		jsonResponse.put("duplicateEntries", (duplicateRecordSet.size() == 0) ? "0" : duplicateRecord);
-		jsonResponse.put("endBalanceError", (balanceMistakeSet.size() == 0) ? "0" : balanceMistakeRecord);
+		jsonResponse.put("endBalanceError", (balanceMismatchSet.size() == 0) ? "0" : balanceMismatchRecord);
 		return jsonResponse;
 	}
 	
