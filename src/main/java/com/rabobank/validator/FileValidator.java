@@ -49,11 +49,11 @@ public class FileValidator {
 		
 		JSONObject jsonResponse = new JSONObject();
 		Set<String> duplicateRecordSet = new HashSet<String>();
-		Set<String> balanceMistakeSet = new HashSet<String>();
+		Set<String> balanceMismatchSet = new HashSet<String>();
 
 		if (fileType.equalsIgnoreCase("xml")) {
-			validateXmlFile(inputFile, duplicateRecordSet, balanceMistakeSet);
-			jsonResponse = mapJsonArrayToJsonObject(duplicateRecordSet, balanceMistakeSet);
+			validateXmlFile(inputFile, duplicateRecordSet, balanceMismatchSet);
+			jsonResponse = mapJsonArrayToJsonObject(duplicateRecordSet, balanceMismatchSet);
 			
 		} else if (fileType.equalsIgnoreCase("csv")) { 
 
@@ -64,9 +64,9 @@ public class FileValidator {
 
 				String[] fieldData = line.split(",");
 				validateInputsFromFile(fieldData[0].trim(), fieldData[3].trim(), fieldData[4].trim(), 
-						fieldData[5].trim(), duplicateRecordSet, balanceMistakeSet, recordMap);
+						fieldData[5].trim(), duplicateRecordSet, balanceMismatchSet, recordMap);
 			});
-			jsonResponse = mapJsonArrayToJsonObject(duplicateRecordSet, balanceMistakeSet);
+			jsonResponse = mapJsonArrayToJsonObject(duplicateRecordSet, balanceMismatchSet);
 			
 			
 		}else {
