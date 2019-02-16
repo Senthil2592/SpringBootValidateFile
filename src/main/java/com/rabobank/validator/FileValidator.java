@@ -4,9 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -15,16 +13,24 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
+import com.rabobank.bean.AppBean;
+import com.rabobank.bean.TransactionReportBean;
+import com.rabobank.contants.AppConstants;
+import com.rabobank.exception.ApplicationException;
+import com.rabobank.mapper.FileValidatorMapper;
 
 /**
  * @author Senthilkumar
@@ -34,52 +40,58 @@ import org.xml.sax.SAXException;
 public class FileValidator {
 
 	
-	public static final String HEADER_INFO  = "Reference,AccountNumber,Description,Start Balance,Mutation,End Balance";
+	
 	Logger log = LoggerFactory.getLogger(FileValidator.class);
+	
+	@Autowired
+	private FileValidatorMapper fileValidatorMapper;
 
 
 	/**
 	 * @param inputFile
 	 * @return
 	 * @throws IOException This method validates the file sent to this rest service
+	 * @throws ApplicationException 
+	 * @throws ParseException 
 	 */
-	public JSONObject validateInputFile(MultipartFile inputFile) throws IOException {
+	public JSONObject validateInputFile(MultipartFile inputFile) throws IOException, ApplicationException {
 
-		String fileType = inputFile.getOriginalFilename().split("\\.")[1];
+		String fileType = inputFile.getOriginalFilename().split(AppConstants.DOT)[1];
 		
-		JSONObject jsonResponse = new JSONObject();
-		Set<String> duplicateRecordSet = new HashSet<String>();
-		Set<String> balanceMismatchSet = new HashSet<String>();
+		JSONObject jsonResponse ;
+		Set<TransactionReportBean> transactionReportSet = new HashSet<TransactionReportBean>();
+		JSONParser parser = new JSONParser();
 
-		if (fileType.equalsIgnoreCase("xml")) {
-			validateXmlFile(inputFile, duplicateRecordSet, balanceMismatchSet);
-			jsonResponse = mapJsonArrayToJsonObject(duplicateRecordSet, balanceMismatchSet);
+		if (fileType.equalsIgnoreCase(AppConstants.XML)) {
+			validateXmlFile(inputFile, transactionReportSet);
+			jsonResponse  = fileValidatorMapper.convertJsonObjectToList(parser, transactionReportSet);
 			
-		} else if (fileType.equalsIgnoreCase("csv")) { 
+		} else if (fileType.equalsIgnoreCase(AppConstants.CSV)) { 
 
-			Map<String, Float> recordMap = new HashMap<String, Float>();
+			Set<String> transactionRecordSet = new HashSet<String>();
 			Stream<String> streamedLines = new BufferedReader(new InputStreamReader(inputFile.getInputStream())).lines();
 		
-			streamedLines.filter(data -> (data != null && !data.contains(HEADER_INFO))).forEach(line -> {
+			streamedLines.filter(data -> (data != null && !data.contains(AppConstants.HEADER_INFO))).forEach(line -> {
 
-				String[] fieldData = line.split(",");
-				validateInputsFromFile(fieldData[0].trim(), fieldData[3].trim(), fieldData[4].trim(), 
-						fieldData[5].trim(), duplicateRecordSet, balanceMismatchSet, recordMap);
+				String[] fieldData = line.split(AppConstants.COMMA);
+				AppBean appBean = fileValidatorMapper.fetchAppBeanFromCsv(fieldData);
+				validateInputsFromFile(appBean, transactionReportSet, transactionRecordSet);
 			});
-			jsonResponse = mapJsonArrayToJsonObject(duplicateRecordSet, balanceMismatchSet);
-			
+			jsonResponse  = fileValidatorMapper.convertJsonObjectToList(parser, transactionReportSet);			
 			
 		}else {
-			throw new IOException("Invalid input file.");
+			log.error(AppConstants.INVALID_INPUT_FILE);
+			throw new ApplicationException(AppConstants.INVALID_INPUT_FILE);
 		}
 
 		return jsonResponse;
 	}
+	
 
 	//Validate XML file
-	private void validateXmlFile(MultipartFile inputFile, Set<String> duplicateRecordSet, Set<String> balanceMismatchSet) {
+	private void validateXmlFile(MultipartFile inputFile, Set<TransactionReportBean> transactionReportSet) throws ApplicationException {
 		
-		 Map<String, Float> recordMap = new HashMap<String, Float>();
+		 Set<String> transactionRecordSet = new HashSet<String>();
 		 DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 	     DocumentBuilder dBuilder;
 
@@ -87,75 +99,50 @@ public class FileValidator {
 	        try {
 	        	dBuilder = dbFactory.newDocumentBuilder();
 				Document doc = dBuilder.parse(inputFile.getInputStream());
-		        NodeList nodeList = doc.getElementsByTagName("record");
+		        NodeList nodeList = doc.getElementsByTagName(AppConstants.RECORD);
 		        
 		        Stream<Node> nodeStream = IntStream.range(0, nodeList.getLength()).mapToObj(nodeList::item);
 		        
 		        nodeStream.filter(node -> (node.getNodeType() == Node.ELEMENT_NODE)).forEach(node -> {
+		        	
 		        	  Element element = (Element) node;
-		        	    
-		        	  validateInputsFromFile(element.getAttribute("reference"), fetchValueFromXML(element, "startBalance"), 
-		        	    		fetchValueFromXML(element, "mutation"), fetchValueFromXML(element, "endBalance"), duplicateRecordSet, balanceMismatchSet, recordMap);
+		        	  AppBean appBean = fileValidatorMapper.fetchAppBeanFromXml(element);
+		        	  validateInputsFromFile(appBean, transactionReportSet, transactionRecordSet);
 		        });
 				
 			} catch (SAXException | ParserConfigurationException| IOException exception) {
-				log.error("Error at parsing xml file", exception);
+				log.error(AppConstants.XML_PARSE_ERROR, exception);
+				throw new ApplicationException(AppConstants.XML_PARSE_ERROR);
+
 			}
 	}
 	
-	
-	private void setJsonArrayObject(JSONArray dupRecordArray, Set<String> duplicateRecordSet) {
-		duplicateRecordSet.forEach(dupRecordArray::add);
-
-	}
 	
 	//Common Validation logic for both csv and xml files
-	private void validateInputsFromFile(String referenceNo, String startBalance, String mutation, String endBalance, Set<String> duplicateRecordSet,
-			Set<String> balanceMismatchSet, Map<String, Float> recordMap) {
+	private void validateInputsFromFile(AppBean appBean, Set<TransactionReportBean> transactionReportSet, Set<String> transactionRecordSet) {
 		
-		if (null == recordMap.get(referenceNo)) {
-			float totalSum = round(Float.parseFloat(startBalance) + Float.parseFloat(mutation));
-			if (totalSum == Float.parseFloat(endBalance)) {
-				recordMap.put(referenceNo, totalSum);
+		if (!transactionRecordSet.contains(appBean.getReference())) {
+			BigDecimal totalSum = appBean.getStartBalance().add(appBean.getMutation());
+			
+			if (totalSum.compareTo(appBean.getEndBalance()) == 0) {
+				transactionRecordSet.add(appBean.getReference());
 			} else {
-				balanceMismatchSet.add(referenceNo);
+				fileValidatorMapper.fetchTransactionReport(transactionReportSet, appBean, AppConstants.END_BALANCE_ERROR_STATUS);
 			}
 		} else {
-			duplicateRecordSet.add(referenceNo);
+			fileValidatorMapper.fetchTransactionReport(transactionReportSet, appBean, AppConstants.DUPLICATE_RECORD_STATUS);
+
 		}
 	
-}
-	private String fetchValueFromXML(Element eElement, String attributeName) {
-		return eElement
-                .getElementsByTagName(attributeName)
-                .item(0)
-                .getTextContent();
 	}
 	
-	private JSONObject mapJsonArrayToJsonObject(Set<String> duplicateRecordSet, Set<String> balanceMismatchSet) {
-		JSONObject jsonResponse = new JSONObject();
-		JSONArray duplicateRecord = new JSONArray();
-		JSONArray balanceMismatchRecord = new JSONArray();
-
-		jsonResponse.put("status", (duplicateRecordSet.size() == 0 && balanceMismatchSet.size() == 0) ? "Success" : "Error");
-		setJsonArrayObject(duplicateRecord, duplicateRecordSet);
-		setJsonArrayObject(balanceMismatchRecord, balanceMismatchSet);
-		jsonResponse.put("duplicateEntries", (duplicateRecordSet.size() == 0) ? "0" : duplicateRecord);
-		jsonResponse.put("endBalanceError", (balanceMismatchSet.size() == 0) ? "0" : balanceMismatchRecord);
-		return jsonResponse;
-	}
 	
+	@SuppressWarnings(AppConstants.UNCHECKED)
 	public JSONObject returnJsonError() {
 		JSONObject jsonResponse = new JSONObject();
-		jsonResponse.put("status","Error: Invalid Input File");
+		jsonResponse.put(AppConstants.STATUS, AppConstants.INVALID_INPUT_FILE);
 		return jsonResponse;
 
-	}
-
-	private float round(float balance) {
-		BigDecimal balanceBigDecimal = new BigDecimal(balance);
-		balanceBigDecimal = balanceBigDecimal.setScale(2, BigDecimal.ROUND_HALF_UP);
-		return balanceBigDecimal.floatValue();
 	}
 
 }
