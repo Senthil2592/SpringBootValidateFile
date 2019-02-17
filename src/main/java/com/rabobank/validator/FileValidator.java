@@ -53,8 +53,9 @@ public class FileValidator {
 	 * @throws IOException This method validates the file sent to this rest service
 	 * @throws ApplicationException 
 	 * @throws ParseException 
+	 * This method receives the file input and does the validationS
 	 */
-	public JSONObject validateInputFile(MultipartFile inputFile) throws IOException, ApplicationException {
+	public JSONObject validateInputFile(MultipartFile inputFile) {
 
 		String fileType = inputFile.getOriginalFilename().split(AppConstants.DOT)[1];
 		
@@ -64,12 +65,19 @@ public class FileValidator {
 
 		if (fileType.equalsIgnoreCase(AppConstants.XML)) {
 			validateXmlFile(inputFile, transactionReportSet);
-			jsonResponse  = fileValidatorMapper.convertJsonObjectToList(parser, transactionReportSet);
+			jsonResponse  = fileValidatorMapper.convertSetToJsonObject(parser, transactionReportSet);
 			
 		} else if (fileType.equalsIgnoreCase(AppConstants.CSV)) { 
 
 			Set<String> transactionRecordSet = new HashSet<String>();
-			Stream<String> streamedLines = new BufferedReader(new InputStreamReader(inputFile.getInputStream())).lines();
+			Stream<String> streamedLines = null;
+			
+			try {
+				streamedLines = new BufferedReader(new InputStreamReader(inputFile.getInputStream())).lines();
+			} catch (IOException e) {
+				log.error(AppConstants.INPUT_OUTPUT_EXCEPTION);
+				throw new ApplicationException(AppConstants.INPUT_OUTPUT_EXCEPTION);
+			}
 		
 			streamedLines.filter(data -> (data != null && !data.contains(AppConstants.HEADER_INFO))).forEach(line -> {
 
@@ -77,7 +85,7 @@ public class FileValidator {
 				AppBean appBean = fileValidatorMapper.fetchAppBeanFromCsv(fieldData);
 				validateInputsFromFile(appBean, transactionReportSet, transactionRecordSet);
 			});
-			jsonResponse  = fileValidatorMapper.convertJsonObjectToList(parser, transactionReportSet);			
+			jsonResponse  = fileValidatorMapper.convertSetToJsonObject(parser, transactionReportSet);			
 			
 		}else {
 			log.error(AppConstants.INVALID_INPUT_FILE);
@@ -89,7 +97,7 @@ public class FileValidator {
 	
 
 	//Validate XML file
-	private void validateXmlFile(MultipartFile inputFile, Set<TransactionReportBean> transactionReportSet) throws ApplicationException {
+	private void validateXmlFile(MultipartFile inputFile, Set<TransactionReportBean> transactionReportSet) {
 		
 		 Set<String> transactionRecordSet = new HashSet<String>();
 		 DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();

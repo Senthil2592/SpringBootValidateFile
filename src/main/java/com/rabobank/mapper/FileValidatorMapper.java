@@ -22,6 +22,11 @@ public class FileValidatorMapper {
 	Logger log = LoggerFactory.getLogger(FileValidatorMapper.class);
 
 
+	/**
+	 * @param element
+	 * @return AppBean
+	 * This method extracts the data from xml and sets in AppBean
+	 */
 	public AppBean fetchAppBeanFromXml(Element element) {
 
 		AppBean appBean = new AppBean();
@@ -35,6 +40,12 @@ public class FileValidatorMapper {
 		return appBean;
 	}
 
+	
+	/**
+	 * @param fieldData
+	 * @return AppBean
+	 * This method extracts the data from csv and sets in AppBean
+	 */
 	public AppBean fetchAppBeanFromCsv(String[] fieldData) {
 		AppBean appBean = new AppBean();
 		appBean.setReference(fieldData[0]);
@@ -47,6 +58,13 @@ public class FileValidatorMapper {
 		return appBean;
 	}
 
+	
+	/**
+	 * @param transactionReportSet
+	 * @param appBean
+	 * @param reason
+	 * This method sets the transaction report in TransactionReport Bean
+	 */
 	public void fetchTransactionReport(Set<TransactionReportBean> transactionReportSet, AppBean appBean, String reason) {
 		
 		TransactionReportBean transactionBean = new TransactionReportBean();
@@ -56,13 +74,21 @@ public class FileValidatorMapper {
 		transactionReportSet.add(transactionBean);
 	}
 	
+	
+	/**
+	 * @param parser
+	 * @param transactionReportSet
+	 * @return JSONObject
+	 * @throws ApplicationException
+	 * This method converts the Set into Json Object
+	 */
 	@SuppressWarnings(AppConstants.UNCHECKED)
-	public JSONObject convertJsonObjectToList(JSONParser parser, Set<TransactionReportBean> transactionReportSet) throws ApplicationException {
+	public JSONObject convertSetToJsonObject(JSONParser parser, Set<TransactionReportBean> transactionReportSet) throws ApplicationException {
 		
 		 JSONObject jsonResponse ;
 		try {
 			jsonResponse = new JSONObject();
-			jsonResponse.put("failedTransactions", (JSONArray) parser.parse(new Gson().toJson(transactionReportSet)));
+			jsonResponse.put(AppConstants.FAILED_TRANSACTIONS, (JSONArray) parser.parse(new Gson().toJson(transactionReportSet)));
 		} catch (ParseException e) {
 			log.error(AppConstants.JSON_PARSE_ERROR);
 			throw new ApplicationException(AppConstants.JSON_PARSE_ERROR);

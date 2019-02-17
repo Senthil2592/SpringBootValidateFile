@@ -39,33 +39,33 @@ public class FileValidatorTest {
 
 	@Test
 	@SuppressWarnings(AppConstants.UNCHECKED)
-	public void testValidateInputFileCsvErr() throws IOException, ApplicationException {
+	public void testValidateInputFileCsvErr() throws IOException {
 		
 		MockMultipartFile file = new MockMultipartFile(AppConstants.FILE, AppConstants.CSV_FILE, MediaType.MULTIPART_FORM_DATA_VALUE, AppConstants.CSV_SAMPLE_DATA_ERR.getBytes());
 		JSONObject jsonResponse = returnErrorResponse();
 		when(fileValidatorMapper.fetchAppBeanFromCsv(isA(String[].class))).thenReturn(buildAppBean());
 
-		when(fileValidatorMapper.convertJsonObjectToList(isA(JSONParser.class), isA(Set.class))).thenReturn(jsonResponse);
+		when(fileValidatorMapper.convertSetToJsonObject(isA(JSONParser.class), isA(Set.class))).thenReturn(jsonResponse);
 		assertEquals(jsonResponse, validator.validateInputFile(file));
 
 	}
 
 	@Test
 	@SuppressWarnings(AppConstants.UNCHECKED)
-	public void testValidateInputFileXmlErr() throws IOException, ApplicationException {
+	public void testValidateInputFileXmlErr() throws IOException {
 		
 		MockMultipartFile file = new MockMultipartFile(AppConstants.FILE, AppConstants.XML_FILE, MediaType.MULTIPART_FORM_DATA_VALUE, AppConstants.XML_SAMPLE_DATA_ERR.getBytes());
 		
 		JSONObject jsonResponse = returnErrorResponse();
 		when(fileValidatorMapper.fetchAppBeanFromXml(isA(Element.class))).thenReturn(buildAppBean());
 
-		when(fileValidatorMapper.convertJsonObjectToList(isA(JSONParser.class), isA(Set.class))).thenReturn(jsonResponse);
+		when(fileValidatorMapper.convertSetToJsonObject(isA(JSONParser.class), isA(Set.class))).thenReturn(jsonResponse);
 		assertEquals(jsonResponse, validator.validateInputFile(file));
 
 	}
 	
 	@Test (expected = ApplicationException.class)
-	public void testValidateInvalidInput() throws IOException, ApplicationException {
+	public void testValidateInvalidInput() throws IOException {
 		MockMultipartFile file = new MockMultipartFile(AppConstants.FILE, AppConstants.HTML_FILE, MediaType.MULTIPART_FORM_DATA_VALUE, AppConstants.HTML_SAMPLE_DATA.getBytes());
 		assertEquals(returnJsonError(),validator.validateInputFile(file));
 
@@ -73,13 +73,13 @@ public class FileValidatorTest {
 	
 	@Test
 	@SuppressWarnings(AppConstants.UNCHECKED)
-	public void testValidateInputFileCsvSuccess() throws IOException, ApplicationException {
+	public void testValidateInputFileCsvSuccess() throws IOException {
 		
 		MockMultipartFile file = new MockMultipartFile(AppConstants.FILE, AppConstants.CSV_FILE, MediaType.MULTIPART_FORM_DATA_VALUE, AppConstants.CSV_SAMPLE_DATA.getBytes());
 		JSONObject jsonResponse = returnSuccessResponse();
 		when(fileValidatorMapper.fetchAppBeanFromCsv(isA(String[].class))).thenReturn(buildAppBean());
 
-		when(fileValidatorMapper.convertJsonObjectToList(isA(JSONParser.class), isA(Set.class))).thenReturn(jsonResponse);
+		when(fileValidatorMapper.convertSetToJsonObject(isA(JSONParser.class), isA(Set.class))).thenReturn(jsonResponse);
 
 		assertEquals(returnSuccessResponse(), validator.validateInputFile(file));
 
@@ -87,13 +87,13 @@ public class FileValidatorTest {
 	
 	@Test
 	@SuppressWarnings(AppConstants.UNCHECKED)
-	public void testValidateInputFileXmlSuccess() throws IOException, ApplicationException {
+	public void testValidateInputFileXmlSuccess() throws IOException {
 
 		MockMultipartFile file = new MockMultipartFile(AppConstants.FILE, AppConstants.XML_FILE, MediaType.MULTIPART_FORM_DATA_VALUE, AppConstants.XML_SAMPLE_DATA.getBytes());
 		JSONObject jsonResponse = returnSuccessResponse();
 		when(fileValidatorMapper.fetchAppBeanFromXml(isA(Element.class))).thenReturn(buildAppBean());
 
-		when(fileValidatorMapper.convertJsonObjectToList(isA(JSONParser.class), isA(Set.class))).thenReturn(jsonResponse);
+		when(fileValidatorMapper.convertSetToJsonObject(isA(JSONParser.class), isA(Set.class))).thenReturn(jsonResponse);
 		assertEquals(jsonResponse, validator.validateInputFile(file));
 
 	}

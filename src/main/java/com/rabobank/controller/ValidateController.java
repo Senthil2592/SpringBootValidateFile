@@ -27,28 +27,32 @@ public class ValidateController {
 
 	@Autowired
 	FileValidator fileValidator;
-	
+
 	Logger log = LoggerFactory.getLogger(ValidateController.class);
 
 	/**
 	 * @param file
 	 * @return
 	 * @throws IOException
+	 * This method get the file input and sends back the report of failed transactions
 	 */
-	
+
 	@RequestMapping(value = AppConstants.VALIDATE_FILE, method = RequestMethod.POST)
 	public @ResponseBody JSONObject validateReportFile(@RequestBody MultipartFile file) {
 		JSONObject jsonResponse = null;
 		try {
 			jsonResponse = fileValidator.validateInputFile(file);
-		} catch (IOException | ApplicationException exception ) {
+		} catch (ApplicationException exception) {
 			jsonResponse = fileValidator.returnJsonError();
-			log.error(AppConstants.APPLICATION_EXE_ERROR, exception);   
+			log.error(AppConstants.APPLICATION_EXE_ERROR, exception);
 		}
 		return jsonResponse;
-		 
+
 	}
-	
+
+	/**
+	 * This method is to check the health of the rest service
+	 */
 	@RequestMapping(value = AppConstants.VALIDATE_FILE, method = RequestMethod.GET)
 	public @ResponseBody String checkServiceStatus() {
 		return AppConstants.WELCOME_TEXT;

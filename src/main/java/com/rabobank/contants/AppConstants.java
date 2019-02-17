@@ -6,6 +6,9 @@ public class AppConstants {
 	public static final String VALIDATE_FILE ="/validateFile";
 	public static final String APPLICATION_EXE_ERROR ="Application execution error";
 	public static final String INVALID_INPUT_FILE ="Invalid Input File";
+	public static final String INPUT_OUTPUT_EXCEPTION ="Error occurred while reading file";
+	public static final String BASE_PACKAGE_SCAN = "com.rabobank.controller";
+
 	public static final String CONTEXT_ROOT ="/rabobank";
 	public static final String HEADER_INFO  = "Reference,AccountNumber,Description,Start Balance,Mutation,End Balance";
 	public static final String XML  = "xml";
@@ -30,7 +33,7 @@ public class AppConstants {
 	public static final String END_BALANCE_ERROR_STATUS = "End Balance Error";
 	public static final String DUPLICATE_RECORD_STATUS = "Duplicate Record";
 	public static final String JSON_PARSE_ERROR = "Json Parse Error";
-	
+	public static final String FAILED_TRANSACTIONS ="failedTransactions";
 
 	
 	

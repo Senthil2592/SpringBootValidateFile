@@ -6,12 +6,13 @@ import org.springframework.boot.web.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 
+import com.rabobank.contants.AppConstants;
 import com.rabobank.mapper.FileValidatorMapper;
 import com.rabobank.validator.FileValidator;
 
 
 @SpringBootApplication
-@ComponentScan(basePackages="com.rabobank.controller")
+@ComponentScan(basePackages= AppConstants.BASE_PACKAGE_SCAN)
 public class ValidateReportFileApplication extends SpringBootServletInitializer {
 
 	public static void main(String[] args) {
