@@ -148,7 +148,7 @@ public class FileValidator {
 	@SuppressWarnings(AppConstants.UNCHECKED)
 	public JSONObject returnJsonError() {
 		JSONObject jsonResponse = new JSONObject();
-		jsonResponse.put(AppConstants.STATUS, AppConstants.INVALID_INPUT_FILE);
+		jsonResponse.put(AppConstants.STATUS, AppConstants.APPLICATION_EXE_ERROR);
 		return jsonResponse;
 
 	}
