@@ -4,8 +4,8 @@ public class ApplicationException  extends RuntimeException {
 
 	public static final long serialVersionUID = 1L;
 
-	public ApplicationException(String execptionLogText) 
+	public ApplicationException(String exceptionLogText) 
     { 
-        super(execptionLogText); 
+        super(exceptionLogText); 
     }
 }
